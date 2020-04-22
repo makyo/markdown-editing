@@ -1,7 +1,7 @@
-import re
+import xml.etree.ElementTree as etree
 
 from markdown.extensions import Extension
-from markdown.postprocessors import Postprocessor
+from markdown.inlinepatterns import InlineProcessor
 
 
 COMMENT_RE = r'''
@@ -48,33 +48,35 @@ class EditingExtension(Extension):
         }
         super(EditingExtension, self).__init__(**kwargs)
 
-    def extendMarkdown(self, md):
+    def extendMarkdown(self, md, what):
         type_map = self.getConfig('type_map')
-        single_item_postprocessor = SingleItemPostprocessor(type_map, md)
-        md.postprocessors.register(single_item_postprocessor, 'singleitemedit', 20)
-        dual_item_postprocessor = DualItemPostprocessor(type_map, md)
-        md.postprocessors.register(dual_item_postprocessor, 'dualitemedit', 20)
+        single_item_processor = SingleItemProcessor(type_map, md)
+        md.inlinePatterns.register(single_item_processor, 'singleitemedit', 20)
+        dual_item_processor = DualItemProcessor(type_map, md)
+        md.inlinePatterns.register(dual_item_processor, 'dualitemedit', 20)
 
 
-class SingleItemPostprocessor(Postprocessor):
-    RE = re.compile(r'''
+def makeExtension(**kwargs):
+    return EditingExtension(**kwargs)
+
+
+class SingleItemProcessor(InlineProcessor):
+    RE = r'''(?x)
+    (?P<item>           # The item block
     (?P<type>[-+?!])\{  # An item
     (?P<contents> (     # containing
-        (?<=\\)\}       #   Any escaped close brace
+        (?<=\\)[{}]     #   Any escaped close brace
         |               #   or
         [^}]            #   Any non-brace
     )+)                 #   One or more
     \}?                  # End of item
-    ''' + COMMENT_RE, re.MULTILINE | re.VERBOSE)
+    ''' + COMMENT_RE + ')'
     
     def __init__(self, type_map, *args, **kwargs):
         self.type_map = type_map
-        super(SingleItemPostprocessor, self).__init__(*args, **kwargs)
+        super(SingleItemProcessor, self).__init__(self.RE, *args, **kwargs)
 
-    def run(self, html):
-        return re.sub(self.RE, self._convert_item, html)
-
-    def _convert_item(self, match):
+    def handleMatch(self, match, data):
         tag = 'mark'
         if match.group('type') == '+':
             tag = 'ins'
@@ -82,67 +84,71 @@ class SingleItemPostprocessor(Postprocessor):
             tag = 'del'
         if match.group('type') == '!':
             tag = 'q'
-        return '<{tag} class="{type}">{content}{comment}</{tag}>'.format(
-            tag=tag,
-            type=self.type_map[match.group('type')],
-            content=match.group('contents'),
-            comment=_build_comment(match, self.type_map))
+        el = etree.Element(
+            tag, 
+            attrib={'class': self.type_map[match.group('type')]})
+        el.text = match.group('contents')
+        comment = _build_comment(match, self.type_map)
+        if comment is not None:
+            el.append(comment)
+        return el, match.start('item'), match.end('item')
 
 
-class DualItemPostprocessor(Postprocessor):
-    RE = re.compile(r'''
-    (?P<type>~)\{              # A substitution (deletion first)
+class DualItemProcessor(InlineProcessor):
+    RE = r'''(?x)
+    (?P<item>
+    (?P<type>~)\{    # A substitution (deletion first)
     (?P<deletion> (  # deletion containing
-        (?<=\\)\}    #   Any escaped close brace
+        (?<=\\)[{}]  #   Any escaped close brace
         |            #   or
         [^}]         #   Any non-brace
     )+)              #   One or more
     \}               # End of deletion
     \{               # (then substitution)
     (?P<addition> (  # addition containing
-        (?<=\\)\}    #   Any escaped close brace
+        (?<=\\)[{}]  #   Any escaped close brace
         |            #   or
         [^}]         #   Any non-brace
     )+)              #   One or more
     \}               # End of deletion
-    ''' + COMMENT_RE, re.MULTILINE | re.VERBOSE)
+    ''' + COMMENT_RE + ')'
     
     def __init__(self, type_map, *args, **kwargs):
         self.type_map = type_map
-        super(DualItemPostprocessor, self).__init__(*args, **kwargs)
+        super(DualItemProcessor, self).__init__(self.RE, *args, **kwargs)
 
-    def run(self, html):
-        return re.sub(self.RE, self._convert_item, html)
-
-    def _convert_item(self, match):
-        return '<span class="{}">{}{}</span>'.format(
-            self.type_map['~'],
-            '<del>{}</del><ins>{}</ins>'.format(
-                match.group('deletion'),
-                match.group('addition')),
-            _build_comment(match, self.type_map))
-
-
-def makeExtension(**kwargs):
-    return EditingExtension(**kwargs)
+    def handleMatch(self, match, data):
+        el = etree.Element(
+            'span',
+            attrib={'class': self.type_map['~']})
+        d = etree.SubElement(el, 'del')
+        d.text = match.group('deletion')
+        i = etree.SubElement(el, 'ins')
+        i.text = match.group('addition')
+        comment = _build_comment(match, self.type_map)
+        if comment is not None:
+            el.append(comment)
+        return el, match.start('item'), match.end('item')
 
 
 def _build_comment(match, type_map):
     if match.group('type') != '!' and match.group('comment') is not None:
-        attribution = ''
-        date = ''
+        el = etree.Element(
+            'q',
+            attrib={'class': type_map['c']})
+        el.text = match.group('comment').strip()
         if match.group('attribution') is not None:
-            attribution = '<span class="{}">{}</span>'.format(
-                type_map['a'],
-                match.group('attribution'))
+            a = etree.SubElement(
+                el,
+                'span',
+                attrib={'class': type_map['a']})
+            a.text = match.group('attribution')
         if match.group('date') is not None:
-            date = '<span class="{}">{}</span>'.format(
-                type_map['d'],
-                match.group('date'))
-        return '<q class="{}">{}{}{}</q>'.format(
-            type_map['c'],
-            match.group('comment').strip(),
-            attribution.strip(),
-            date.strip())
+            d = etree.SubElement(
+                el,
+                'span',
+                attrib={'class': type_map['d']})
+            d.text = match.group('date')
+        return el
     else:
-        return ''
+        return None
