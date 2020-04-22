@@ -46,6 +46,7 @@ class TestExtension(TestCase):
 * With attribution: ~{out with the old}{in with the new}(is what I always say (Makyo))
 * With date: ~{out with the old}{in with the new}(is what I always say (Makyo 2020-04-21))
 * Comment thread: +{Foxes}(More foxes are always good)!{SGTM}
+* Comment with attribution: !{SGTM}(Makyo 2020-04-22)
         """.strip()
 
         expected = """
@@ -55,6 +56,7 @@ class TestExtension(TestCase):
 <li>With attribution: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><q class="comment">is what I always say<span class="attribution">Makyo</span></q></span></li>
 <li>With date: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><q class="comment">is what I always say<span class="attribution">Makyo</span><span class="date">2020-04-21</span></q></span></li>
 <li>Comment thread: <ins class="addition">Foxes<q class="comment">More foxes are always good</q></ins><q class="comment">SGTM</q></li>
+<li>Comment with attribution: <q class="comment">SGTM<span class="attribution">Makyo</span><span class="date">2020-04-22</span></q></li>
 </ul>
         """.strip()
 
@@ -95,3 +97,16 @@ class TestExtension(TestCase):
 
         html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
+
+    def test_mixed(self):
+        source = """
++{some *fancy* new stuff}(With a **fancy** comment)
+        """.strip()
+
+        expected = """
+<p><ins class="addition">some <em>fancy</em> new stuff<q class="comment">With a <strong>fancy</strong> comment</q></ins></p>
+        """.strip()
+
+        html = markdown(source, extensions=[EditingExtension()])
+        self.assertEqual(html, expected)
+
