@@ -19,21 +19,21 @@ class TestExtension(TestCase):
 
     def test_addition(self):
         source = 'foo +{bar} baz +{qux}(yap)'
-        expected = '<p>foo <ins class="addition">bar</ins> baz <ins class="addition">qux<aside>yap</aside></ins></p>'
+        expected = '<p>foo <ins class="addition">bar</ins> baz <ins class="addition">qux<q class="comment">yap</q></ins></p>'
 
         html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
 
     def test_deletion(self):
         source = 'foo -{bar} baz -{qux}(yap)'
-        expected = '<p>foo <del class="deletion">bar</del> baz <del class="deletion">qux<aside>yap</aside></del></p>'
+        expected = '<p>foo <del class="deletion">bar</del> baz <del class="deletion">qux<q class="comment">yap</q></del></p>'
 
         html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
 
     def test_selected(self):
         source = 'foo ?{bar}(qux) baz'
-        expected = '<p>foo <mark class="selected">bar<aside>qux</aside></mark> baz</p>'
+        expected = '<p>foo <mark class="selected">bar<q class="comment">qux</q></mark> baz</p>'
 
         html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
@@ -51,10 +51,10 @@ class TestExtension(TestCase):
         expected = """
 <ul>
 <li>Substitution: <span class="substitution"><del>out with the old</del><ins>in with the new</ins></span></li>
-<li>With comment: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><aside>is what I always say</aside></span></li>
-<li>With attribution: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><aside>is what I always say<span class="attribution">Makyo</span></aside></span></li>
-<li>With date: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><aside>is what I always say<span class="attribution">Makyo</span><span class="date">2020-04-21</span></aside></span></li>
-<li>Comment thread: <ins class="addition">Foxes<aside>More foxes are always good</aside></ins><aside class="comment">SGTM</aside></li>
+<li>With comment: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><q class="comment">is what I always say</q></span></li>
+<li>With attribution: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><q class="comment">is what I always say<span class="attribution">Makyo</span></q></span></li>
+<li>With date: <span class="substitution"><del>out with the old</del><ins>in with the new</ins><q class="comment">is what I always say<span class="attribution">Makyo</span><span class="date">2020-04-21</span></q></span></li>
+<li>Comment thread: <ins class="addition">Foxes<q class="comment">More foxes are always good</q></ins><q class="comment">SGTM</q></li>
 </ul>
         """.strip()
 

@@ -30,7 +30,7 @@ TYPE_MAP = {
     '~': 'substitution',
     '?': 'selected',
     '!': 'comment',
-    'c': '',
+    'c': 'comment',
     'a': 'attribution',
     'd': 'date',
 }
@@ -81,7 +81,7 @@ class SingleItemPostprocessor(Postprocessor):
         if match.group('type') == '-':
             tag = 'del'
         if match.group('type') == '!':
-            tag = 'aside'
+            tag = 'q'
         return '<{tag} class="{type}">{content}{comment}</{tag}>'.format(
             tag=tag,
             type=self.type_map[match.group('type')],
@@ -139,7 +139,8 @@ def _build_comment(match, type_map):
             date = '<span class="{}">{}</span>'.format(
                 type_map['d'],
                 match.group('date'))
-        return '<aside>{}{}{}</aside>'.format(
+        return '<q class="{}">{}{}{}</q>'.format(
+            type_map['c'],
             match.group('comment').strip(),
             attribution.strip(),
             date.strip())
