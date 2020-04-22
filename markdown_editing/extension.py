@@ -51,9 +51,9 @@ class EditingExtension(Extension):
     def extendMarkdown(self, md, what):
         type_map = self.getConfig('type_map')
         single_item_processor = SingleItemProcessor(type_map, md)
-        md.inlinePatterns.register(single_item_processor, 'singleitemedit', 20)
+        md.inlinePatterns.register(single_item_processor, 'singleitemedit', 75)
         dual_item_processor = DualItemProcessor(type_map, md)
-        md.inlinePatterns.register(dual_item_processor, 'dualitemedit', 20)
+        md.inlinePatterns.register(dual_item_processor, 'dualitemedit', 75)
 
 
 def makeExtension(**kwargs):

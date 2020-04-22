@@ -61,5 +61,37 @@ class TestExtension(TestCase):
         html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
 
-        html = markdown(source, extensions=['markdown_editing'])
+    def test_level(self):
+        source = """
+```
+?{Some text}(bad wolf)
+```
+
+    ?{Some text}(bad wolf)
+
+> ?{Some text}(good doggy)
+        """.strip()
+
+        expected = """
+<p><code>?{Some text}(bad wolf)</code></p>
+<pre><code>?{Some text}(bad wolf)
+</code></pre>
+<blockquote>
+<p><mark class="selected">Some text<q class="comment">good doggy</q></mark></p>
+</blockquote>
+        """.strip()
+
+        html = markdown(source, extensions=[EditingExtension()])
+        self.assertEqual(html, expected)
+
+    def test_nesting(self):
+        source = """
+?{The only currently working form of nesting}(But what if...!{NO})
+        """.strip()
+
+        expected = """
+<p><mark class="selected">The only currently working form of nesting<q class="comment">But what if...<q class="comment">NO</q></q></mark></p>
+        """.strip()
+
+        html = markdown(source, extensions=[EditingExtension()])
         self.assertEqual(html, expected)
