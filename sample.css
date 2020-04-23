@@ -1,0 +1,91 @@
+/* Editing extension */
+del.deletion, .substitution del {
+    text-decoration: line-through;
+    background-color: #fbb;
+    color: #555;
+}
+
+ins.addition, .substitution ins {
+    text-decoration: none;
+    background-color: #d4fcbc;
+}
+
+mark.selected {
+    background-color: #ddf;
+}
+
+q.comment {
+    display: block;
+    float: right;
+    width: 33%;
+    border: 1px solid #ccc;
+    margin-left: 0.5rem;
+    padding: 0.5rem;
+    clear: both;
+}
+
+q.comment q.comment {
+    /* Do not float or size nested comments. */
+    float: none;
+    width: auto;
+}
+
+q.comment .attribution, q.comment .date {
+    font-size: 10pt;
+    display: inline-block;
+    float: right;
+    clear: both;
+}
+
+q.comment::before, q.comment::after {
+    /* Use pseudo-elements for clearfix. */
+    content: "";
+    display: block;
+    clear: both;
+}
+
+p q.comment::before {
+    /* Add an arrow pointing back to the line. */
+    width: 0;
+    height: -0.5rem;
+    float: left;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 20px solid #ccc;
+    margin-left: calc(-1rem - 12px);
+    margin-top: calc(-0.5rem - 1.195px);
+}
+
+ins q.comment::before {
+    border-right-color: #ceebab;
+}
+
+ins q.comment {
+    background-color: #d4fcbc;
+}
+
+del q.comment::before {
+    border-right-color: #daa;
+}
+
+del q.comment {
+    background-color: #fbb;
+}
+
+mark q.comment::before {
+    border-right-color: #ddf;
+}
+
+mark q.comment {
+    background-color: #eef;
+}
+
+q.comment q.comment::before {
+    /* don't add arrow on nested comments. */
+    border: none;
+}
+
+p + p {
+    /* Clearfix on repeated paragraphs (repeated needed to allow TOC float). */
+    clear: both;
+}
