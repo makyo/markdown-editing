@@ -48,7 +48,7 @@ class EditingExtension(Extension):
         }
         super(EditingExtension, self).__init__(**kwargs)
 
-    def extendMarkdown(self, md, what):
+    def extendMarkdown(self, md):
         type_map = self.getConfig('type_map')
         comment_item_processor = CommentItemProcessor(type_map, md)
         md.inlinePatterns.register(comment_item_processor, 'commentitemedit', 75)
